@@ -1,48 +1,54 @@
 """
-Database Schemas
+Database Schemas for the Business Directory (Κτηνίατροι Ελλάδας)
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a MongoDB collection.
+Collection name is the lowercase class name by default.
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, HttpUrl, conlist, conint
+from typing import Optional, List
 
-# Example schemas (replace with your own):
+
+class Vet(BaseModel):
+    """
+    Κτηνίατροι (vets) collection schema
+    Collection name: "vet"
+    """
+    name: str = Field(..., description="Επωνυμία ιατρείου ή ονόματεπώνυμο")
+    phone: Optional[str] = Field(None, description="Τηλέφωνο επικοινωνίας")
+    email: Optional[str] = Field(None, description="Email")
+    website: Optional[str] = Field(None, description="Ιστότοπος")
+    address: Optional[str] = Field(None, description="Διεύθυνση")
+    city: str = Field(..., description="Πόλη")
+    region: str = Field(..., description="Περιφέρεια/Νομός")
+    latitude: Optional[float] = Field(None, description="Γεωγραφικό πλάτος")
+    longitude: Optional[float] = Field(None, description="Γεωγραφικό μήκος")
+    specialties: List[str] = Field(default_factory=list, description="Ειδικότητες")
+    services: List[str] = Field(default_factory=list, description="Υπηρεσίες")
+    hours: Optional[dict] = Field(default=None, description="Ωράριο λειτουργίας")
+    rating: float = Field(0.0, ge=0.0, le=5.0, description="Μέση αξιολόγηση")
+    reviews_count: int = Field(0, ge=0, description="Πλήθος αξιολογήσεων")
+    is_verified: bool = Field(False, description="Επαληθευμένη καταχώρηση")
+    avatar_url: Optional[str] = Field(None, description="Εικόνα προφίλ/λογότυπο")
+
+
+class Review(BaseModel):
+    """
+    Αξιολογήσεις κτηνιάτρων
+    Collection name: "review"
+    """
+    vet_id: str = Field(..., description="ID κτηνιάτρου")
+    author_name: str = Field(..., description="Ονοματεπώνυμο")
+    rating: conint(ge=1, le=5) = Field(..., description="Βαθμολογία 1-5")
+    comment: Optional[str] = Field(None, description="Σχόλιο")
+
 
 class User(BaseModel):
     """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
+    Απλός χρήστης/ιδιοκτήτης καταχώρησης (για μελλοντική χρήση)
+    Collection name: "user"
     """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
-
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+    name: str
+    email: str
+    avatar_url: Optional[str] = None
+    is_active: bool = True
